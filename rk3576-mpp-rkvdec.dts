@@ -1,0 +1,57 @@
+/dts-v1/;
+/plugin/;
+/*
+ * Runtime overlay: bind the vendor MPP rk_vcodec (rkvdec2) to the RK3576 VDPU383
+ * instead of the mainline V4L2 rockchip_vdec. Applied via configfs on .165.
+ *
+ * Clock/reset IDs decoded from the LIVE mainline node phandles (cru=0x15) and
+ * remapped to the BSP clock-NAMES the MPP rkvdec2_init looks up:
+ *   axi=ACLK_RKVDEC_ROOT(317) ahb=HCLK_RKVDEC(318) core=CLK_RKVDEC_CORE(320)
+ *   cabac=ACLK_RKVDEC_ROOT_BAK(540) hevc_cabac=CLK_RKVDEC_HEVC_CA(319)
+ * resets: video_a=SRST_A_RKVDEC_BIU(280) video_h=SRST_H_RKVDEC_BIU(279)
+ *   video_core=SRST_RKVDEC_CORE(282) video_hevc_cabac=SRST_RKVDEC_HEVC_CA(281)
+ * iommu phandle 0x5b (iommu@27b00800, rk_iommu); power = &power domain 14 (RK3576_PD_VDEC).
+ * SRAM-RCB omitted for first light -> DRAM RCB fallback.
+ */
+/*
+ * NOTE: we do NOT disable the mainline video-codec@27b00000 node here. Disabling it
+ * triggers of_platform_device_destroy -> rk_iommu_release_device -> a pm_runtime_drop_link
+ * WARN that rolls back the overlay apply. Instead the V4L2 driver is unbound manually first
+ * (echo 27b00100.video-codec > /sys/bus/platform/drivers/rkvdec/unbind); the old node then
+ * sits unbound and does NOT reserve its MMIO, so the MPP node below can claim it.
+ */
+/ {
+	fragment@1 {
+		target-path = "/soc";
+		__overlay__ {
+			mpp_srv: mpp-srv {
+				compatible = "rockchip,mpp-service";
+				rockchip,taskqueue-count = <6>;
+				rockchip,resetgroup-count = <2>;
+				status = "okay";
+			};
+
+			rkvdec_mpp: rkvdec@27b00000 {
+				compatible = "rockchip,rkv-decoder-rk3576", "rockchip,rkv-decoder-v383";
+				reg = <0x0 0x27b00100 0x0 0x600>, <0x0 0x27b00000 0x0 0x100>;
+				reg-names = "regs", "link";
+				interrupts = <0x0 308 0x4>;
+				interrupt-names = "irq_rkvdec";
+				clocks = <&cru 317>, <&cru 318>, <&cru 320>, <&cru 540>, <&cru 319>;
+				clock-names = "aclk_vcodec", "hclk_vcodec",
+					      "clk_core", "clk_cabac", "clk_hevc_cabac";
+				resets = <&cru 280>, <&cru 279>, <&cru 282>, <&cru 281>;
+				reset-names = "video_a", "video_h", "video_core", "video_hevc_cabac";
+				rockchip,normal-rates = <600000000>, <0>, <600000000>, <500000000>, <1000000000>;
+				assigned-clocks = <&cru 317>, <&cru 320>, <&cru 540>, <&cru 319>;
+				assigned-clock-rates = <600000000>, <600000000>, <500000000>, <1000000000>;
+				iommus = <0x5b>;
+				rockchip,srv = <&mpp_srv>;
+				rockchip,task-capacity = <8>;
+				rockchip,taskqueue-node = <5>;
+				power-domains = <&power 14>;
+				status = "okay";
+			};
+		};
+	};
+};
