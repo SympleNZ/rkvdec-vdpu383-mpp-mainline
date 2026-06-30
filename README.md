@@ -144,6 +144,6 @@ re-implementation does not yet match it.
 ## Related
 
 - [`rkvdec-vdpu383-av1`](https://github.com/SympleNZ/rkvdec-vdpu383-av1) — the mainline V4L2 AV1 driver this harness measures against.
-- [`rkvdec-vdpu383-vp9`](https://github.com/SympleNZ/rkvdec-vdpu383-vp9) — the mainline V4L2 VP9 driver (production-ready for KEY / single-ref / low-motion).
+- [`rkvdec-vdpu383-vp9`](https://github.com/SympleNZ/rkvdec-vdpu383-vp9) — the mainline V4L2 VP9 driver (bit-exact to MPP on KEY / single-reference / low-motion; compound is the open gap).
 - [`rkvdec-vdpu383-h264-hevc`](https://github.com/SympleNZ/rkvdec-vdpu383-h264-hevc) — the mainline HEVC/H.264 read-cache throughput fix (7× / 2.4×) this harness's timing comparison surfaced.
 
