@@ -47,6 +47,14 @@ the in-progress mainline V4L2 effort.
   `vendor/` is a **pinned, pristine snapshot**, unmodified on disk; every change
   is applied visibly at build time by `build.sh`.
 
+This build was also the **golden reference** for the sibling V4L2 drivers'
+investigation: decoding AV1 and VP9-INTER bit-exact on the same mainline kernel and
+silicon is what proved those failures are driver-class, not silicon — and libmpp's
+own dump path (`DUMP_VDPU383_DATAS`) on this stack provided the *correct* adapted-CDF
+and decoded-output captures the V4L2 differential was diffed against. See
+[`rkvdec-vdpu383-av1`](https://github.com/SympleNZ/rkvdec-vdpu383-av1) and
+[`rkvdec-vdpu383-vp9`](https://github.com/SympleNZ/rkvdec-vdpu383-vp9).
+
 ## Repository layout
 
 ```
